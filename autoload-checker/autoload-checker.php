@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Autoload Checker
-Version: 1.0
+Version: 1.1
 Description: Checks the autoloaded data size and lists the top autoloaded data entries sorted by size.
 Author: Gerard Blanco
 Author URI: https://accelerawp.com
@@ -44,56 +44,59 @@ if( !class_exists( 'GRBLNC_Autoload_Checker' ) ){
 				<h1><?php echo esc_html__( 'Total Autoload Size','autoload-checker' ); ?></h1>
 				<?php
 				global $wpdb;
-
-				//Get table prefix
-				$options_table = $wpdb->prefix . 'options';
-
-				//Get total size
-				$result =  
-					$wpdb->get_results(
-						$wpdb->prepare(
-							"SELECT SUM( LENGTH( option_value ) / 1024.0 ) as autoload_size FROM %i WHERE autoload = 'yes'",
-							$options_table
-						),
-						
-					);		
 				
-				//Get top 20 autoloads
-				$autoload_toplist =  
-					$wpdb->get_results(
-						$wpdb->prepare(
-							"SELECT option_name, LENGTH( option_value ) / 1024.0 AS option_value_length FROM %i WHERE autoload = 'yes' ORDER BY option_value_length DESC LIMIT 20",
-							$options_table
-						),
-						
-					);
+				// Get autoloaded options
+				$alloptions = wp_load_alloptions();
 
-				//Show total
-				foreach( $result as $object => $uno ) {
-					$size = round( $uno->autoload_size ) . ' KB';
-					?>
-					<p style="font-weight:bold;font-size:1.5em;"><?php echo esc_html( $size ); ?></p>
-					<?php
+				// Initialize total size and toplist array
+				$total_size_bytes = 0;
+				$autoload_toplist = [];
+
+				// Calculate total size and build top 20 list
+				foreach ( $alloptions as $option_name => $option_value ) {
+					// Serialize if needed to calculate size with overhead
+					if ( is_array( $option_value ) || is_object( $option_value ) ) {
+						$option_value = maybe_serialize( $option_value );
+					}
+
+					$size_bytes = strlen( (string) $option_value );
+					$total_size_bytes += $size_bytes;
+
+					// Add to toplist array
+					$autoload_toplist[] = (object) [
+						'option_name'       => $option_name,
+						'option_value_size' => $size_bytes / 1024, // Convert bytes to KB
+					];
 				}
 
-				//Show top list
+				// Sort toplist by size (descending) and get top 30
+				usort( $autoload_toplist, function( $a, $b ) {
+					return $b->option_value_size <=> $a->option_value_size;
+				});
+				$autoload_toplist = array_slice( $autoload_toplist, 0, 30 );
+
+				// Convert total size to KB
+				$total_size_kb = round( $total_size_bytes / 1024 );
+
+				// Display total size
 				?>
-				<h2><?php echo esc_html__( 'Autoload top list:','autoload-checker' ); ?></h2>
+				<p style="font-weight:bold;font-size:1.5em;"><?php echo esc_html( $total_size_kb . ' KB' ); ?></p>
+
+				<h2><?php echo esc_html__( 'Autoload Top List:', 'autoload-checker' ); ?></h2>
 				<table style="max-width:600px;" class="widefat striped">
 					<thead><tr>
-						<th scope="col"><?php echo esc_html__( '#','autoload-checker' ); ?></th>
-						<th scope="col"><?php echo esc_html__( 'Option name','autoload-checker' ); ?></th>
-						<th scope="col"><?php echo esc_html__( 'Size','autoload-checker' ); ?></th>
+						<th scope="col"><?php echo esc_html__( '#', 'autoload-checker' ); ?></th>
+						<th scope="col"><?php echo esc_html__( 'Option Name', 'autoload-checker' ); ?></th>
+						<th scope="col"><?php echo esc_html__( 'Size', 'autoload-checker' ); ?></th>
 					</tr></thead>
 					<tbody>
-						<?php foreach ( $autoload_toplist as $k => $v ) : 
-							$index			= $k + 1;
-							$option_name 	= $v->option_name;
-							$size 			= round( $v->option_value_length ) . ' KB';
+						<?php foreach ( $autoload_toplist as $k => $option ) : 
+							$index = $k + 1;
+							$size  = round( $option->option_value_size ) . ' KB';
 						?>
 						<tr>
 							<td><?php echo esc_html( $index ); ?></td>
-							<td><?php echo esc_html( $option_name ); ?></td>
+							<td><?php echo esc_html( $option->option_name ); ?></td>
 							<td><?php echo esc_html( $size ); ?></td>
 						</tr>
 						<?php endforeach; ?>

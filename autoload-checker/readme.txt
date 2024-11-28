@@ -1,9 +1,9 @@
 === Autoload Checker ===
 Contributors: sixaxis
-Tags: autoloads, autoloaded data, clean up options, clean database, optimize database, check database status
+Tags: autoloads, autoloaded data, clean up options, clean database, optimize database
 Requires at least: 4.3
 Tested up to: 6.7
-Stable tag: 1.0
+Stable tag: 1.1
 License: GPLv2+
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,8 +19,17 @@ Autoload Checker is easy to use and does not require any configuration. Just ins
 == Installation ==
 1. Install Autoload Checker via the plugin directory.
 2. Activate Autoload Checker.
-3. Find the tool on Tools > Autoload Checker
+3. Find the tool on Tools > Autoload Checker.
 
 == Changelog ==
-= 1.0 =
+
+### 1.0
+
 * Initial release
+
+### 1.1
+
+**Release date: 28/11/2024**
+
+* Tweak: Changed the way the autoloads total size is counted, to also account for serialization overhead.
+* Tweak: Increased the top autoloaded data entries to 30.
