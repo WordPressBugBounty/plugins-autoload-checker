@@ -2,7 +2,7 @@
 Contributors: sixaxis
 Tags: autoloads, autoloaded data, clean up options, clean database, optimize database
 Requires at least: 4.3
-Tested up to: 6.7
+Tested up to: 6.8
 Stable tag: 1.1
 License: GPLv2+
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
